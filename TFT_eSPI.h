@@ -22,6 +22,12 @@
 // Bit 0 set: viewport capability
 #define TFT_ESPI_FEATURES 1
 
+enum class direction
+{
+    input,
+    output
+};
+
 /***************************************************************************************
 **                         Section 1: Load required header files
 ***************************************************************************************/
@@ -735,11 +741,6 @@ class TFT_eSPI
   uint8_t  readByte(void);
 
     // GPIO parallel bus input/output direction control
-    enum class direction
-    {
-        input,
-        output
-    };
     void     busDir(uint32_t mask, direction mode);
 
            // Single GPIO input/output direction control

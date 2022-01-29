@@ -150,7 +150,10 @@
   #define tft_Read_8() spi.transfer(0)
 #endif
 
+void pinMode(int pin, direction mode);
+
 void digitalWrite(int pin, int value);
 
 int digitalRead(int pin);
 
+void delay(int ms);

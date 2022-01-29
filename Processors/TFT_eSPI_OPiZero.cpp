@@ -11,6 +11,28 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+void pinMode(int pin, direction mode)
+{
+    char s[40];
+    sprintf(s, "/sys/class/gpio/gpio%d/direction", pin);
+    int fd = open(s, O_WRONLY);
+    if (fd == -1)
+    {
+        auto err = errno;
+        printf("Unable to open %s: %s", s, strerror(err));
+        exit(1);
+    }
+    if (::write(fd,
+                mode == direction::input ? "in" : "out",
+                mode == direction::input ? 2 : 3) !=
+        (mode == direction::input ? 2 : 3))
+    {
+        auto err = errno;
+        printf("Error writing to %s: %s", s, strerror(err));
+        exit(1);
+    }
+}
+
 void digitalWrite(int pin, int value)
 {
     char s[32];
@@ -52,6 +74,11 @@ int digitalRead(int pin)
         exit(1);
     }
     return c == '1';
+}
+
+void delay(int ms)
+{
+    usleep(ms*1000);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -139,22 +166,6 @@ void TFT_eSPI::pushPixels(const void* data_in, uint32_t len){
         exit(1);                                                \
     }
 
-#define SET_PIN_MODE(pin, mode)                                         \
-    fd = open("/sys/class/gpio/gpio" #pin "/direction", O_WRONLY);      \
-    if (fd == -1)                                                       \
-    {                                                                   \
-        perror("Unable to open /sys/class/gpio" #pin "/direction");     \
-        exit(1);                                                        \
-    }                                                                   \
-    if (::write(fd,                                                     \
-              mode == direction::input ? "in" : "out",                  \
-              mode == direction::input ? 2 : 3) !=                      \
-        (mode == direction::input ? 2 : 3))                             \
-    {                                                                   \
-        perror("Error writing to /sys/class/gpio/" #pin "/direction");  \
-        exit(1);                                                        \
-    }
-
 /***************************************************************************************
 ** Function name:           GPIO direction control  - supports class functions
 ** Description:             Set parallel bus to direction::input or direction::output
@@ -176,14 +187,14 @@ void TFT_eSPI::busDir(uint32_t mask, direction mode)
     EXPORT_PIN(TFT_D5);
     EXPORT_PIN(TFT_D6);
     EXPORT_PIN(TFT_D7);
-    SET_PIN_MODE(TFT_D0, mode);
-    SET_PIN_MODE(TFT_D1, mode);
-    SET_PIN_MODE(TFT_D2, mode);
-    SET_PIN_MODE(TFT_D3, mode);
-    SET_PIN_MODE(TFT_D4, mode);
-    SET_PIN_MODE(TFT_D5, mode);
-    SET_PIN_MODE(TFT_D6, mode);
-    SET_PIN_MODE(TFT_D7, mode);
+    pinMode(TFT_D0, mode);
+    pinMode(TFT_D1, mode);
+    pinMode(TFT_D2, mode);
+    pinMode(TFT_D3, mode);
+    pinMode(TFT_D4, mode);
+    pinMode(TFT_D5, mode);
+    pinMode(TFT_D6, mode);
+    pinMode(TFT_D7, mode);
 }
 
 /***************************************************************************************

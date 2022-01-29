@@ -149,3 +149,8 @@
   // Use a SPI read transfer
   #define tft_Read_8() spi.transfer(0)
 #endif
+
+void digitalWrite(int pin, int value);
+
+int digitalRead(int pin);
+

@@ -6,9 +6,53 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+void digitalWrite(int pin, int value)
+{
+    char s[32];
+    sprintf(s, "/sys/class/gpio/gpio%d/value", pin);
+    int fd = open(s, O_WRONLY);
+    if (fd == -1) {
+        int err = errno;
+        printf("Unable to open %s: %s", s, strerror(err));
+        exit(1);
+    }
+
+    if (write(fd, value ? "1" : "0", 1) != 1) {
+        int err = errno;
+        printf("Error writing to %s: %s", s, strerror(err));
+        exit(1);
+    }
+}
+
+int digitalRead(int pin)
+{
+    char s[32];
+    sprintf(s, "/sys/class/gpio/gpio%d/value", pin);
+    int fd = open(s, O_WRONLY);
+    if (fd == -1) {
+        int err = errno;
+        printf("Unable to open %s: %s", s, strerror(err));
+        exit(1);
+    }
+
+    char c;
+    if (read(fd, &c, 1) != 1) {
+        int err = errno;
+        printf("Error reading from %s: %s", s, strerror(err));
+        exit(1);
+    }
+    if (c != '0' && c != '1')
+    {
+        printf("Bad input value from %s: %d", s, (int) c);
+        exit(1);
+    }
+    return c == '1';
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////
 #if defined (TFT_SDA_READ) && !defined (TFT_PARALLEL_8_BIT)

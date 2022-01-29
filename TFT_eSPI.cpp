@@ -24,8 +24,10 @@
   #include "Processors/TFT_eSPI_STM32.c"
 #elif defined (ARDUINO_ARCH_RP2040)  || defined (ARDUINO_ARCH_MBED) // Raspberry Pi Pico
   #include "Processors/TFT_eSPI_RP2040.c"
+#elif defined (SETUP_OPI_ZERO_ILI9341_PARALLEL)
+  #include "Processors/TFT_eSPI_OPiZero.cpp"
 #else
-  #include "Processors/TFT_eSPI_Generic.c"
+  #include "Processors/TFT_eSPI_Generic.cpp"
 #endif
 
 #ifndef SPI_BUSY_CHECK
@@ -2743,7 +2745,7 @@ int16_t TFT_eSPI::height(void)
 ** Function name:           textWidth
 ** Description:             Return the width in pixels of a string in a given font
 ***************************************************************************************/
-int16_t TFT_eSPI::textWidth(const String& string)
+int16_t TFT_eSPI::textWidth(const std::string& string)
 {
   int16_t len = string.length() + 2;
   char buffer[len];
@@ -2751,7 +2753,7 @@ int16_t TFT_eSPI::textWidth(const String& string)
   return textWidth(buffer, textfont);
 }
 
-int16_t TFT_eSPI::textWidth(const String& string, uint8_t font)
+int16_t TFT_eSPI::textWidth(const std::string& string, uint8_t font)
 {
   int16_t len = string.length() + 2;
   char buffer[len];
@@ -4458,7 +4460,7 @@ int16_t TFT_eSPI::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font)
 ** Description :            draw string with padding if it is defined
 ***************************************************************************************/
 // Without font number, uses font set by setTextFont()
-int16_t TFT_eSPI::drawString(const String& string, int32_t poX, int32_t poY)
+int16_t TFT_eSPI::drawString(const std::string& string, int32_t poX, int32_t poY)
 {
   int16_t len = string.length() + 2;
   char buffer[len];
@@ -4466,7 +4468,7 @@ int16_t TFT_eSPI::drawString(const String& string, int32_t poX, int32_t poY)
   return drawString(buffer, poX, poY, textfont);
 }
 // With font number
-int16_t TFT_eSPI::drawString(const String& string, int32_t poX, int32_t poY, uint8_t font)
+int16_t TFT_eSPI::drawString(const std::string& string, int32_t poX, int32_t poY, uint8_t font)
 {
   int16_t len = string.length() + 2;
   char buffer[len];
@@ -4711,7 +4713,7 @@ return sumX;
 ** Function name:           drawCentreString (deprecated, use setTextDatum())
 ** Descriptions:            draw string centred on dX
 ***************************************************************************************/
-int16_t TFT_eSPI::drawCentreString(const String& string, int32_t dX, int32_t poY, uint8_t font)
+int16_t TFT_eSPI::drawCentreString(const std::string& string, int32_t dX, int32_t poY, uint8_t font)
 {
   int16_t len = string.length() + 2;
   char buffer[len];
@@ -4734,7 +4736,7 @@ int16_t TFT_eSPI::drawCentreString(const char *string, int32_t dX, int32_t poY, 
 ** Function name:           drawRightString (deprecated, use setTextDatum())
 ** Descriptions:            draw string right justified to dX
 ***************************************************************************************/
-int16_t TFT_eSPI::drawRightString(const String& string, int32_t dX, int32_t poY, uint8_t font)
+int16_t TFT_eSPI::drawRightString(const std::string& string, int32_t dX, int32_t poY, uint8_t font)
 {
   int16_t len = string.length() + 2;
   char buffer[len];

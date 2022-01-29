@@ -26,17 +26,12 @@
 **                         Section 1: Load required header files
 ***************************************************************************************/
 
-//Standard support
-#include <Arduino.h>
-#include <Print.h>
-#include <SPI.h>
+#include <cstdint>
+#include <string>
 
-/***************************************************************************************
-**                         Section 2: Load library and processor specific header files
-***************************************************************************************/
 // Include header file that defines the fonts loaded, the TFT drivers
 // available and the pins to be used, etc, etc
-#include <User_Setup_Select.h>
+#include "User_Setup_Select.h"
 
 // Handle FLASH based storage e.g. PROGMEM
 #if defined(ARDUINO_ARCH_RP2040)
@@ -69,6 +64,8 @@
   #include "Processors/TFT_eSPI_STM32.h"
 #elif defined(ARDUINO_ARCH_RP2040)
   #include "Processors/TFT_eSPI_RP2040.h"
+#elif defined (SETUP_OPI_ZERO_ILI9341_PARALLEL)
+  #include "Processors/TFT_eSPI_OPiZero.h"
 #else
   #include "Processors/TFT_eSPI_Generic.h"
 #endif
@@ -312,7 +309,7 @@ static const uint16_t default_4bit_palette[] PROGMEM = {
 // by calling getSetup(), zero impact on code size unless used, mainly for diagnostics
 typedef struct
 {
-String  version = TFT_ESPI_VERSION;
+std::string  version = TFT_ESPI_VERSION;
 int32_t esp;         // Processor code
 uint8_t trans;       // SPI transaction support
 uint8_t serial;      // Serial (SPI) or parallel
@@ -383,7 +380,9 @@ swap_coord(T& a, T& b) { T t = a; a = b; b = t; }
 typedef uint16_t (*getColorCallback)(uint16_t x, uint16_t y);
 
 // Class functions and variables
-class TFT_eSPI : public Print { friend class TFT_eSprite; // Sprite class has access to protected members
+class TFT_eSPI
+{
+ friend class TFT_eSprite; // Sprite class has access to protected members
 
  //--------------------------------------- public ------------------------------------//
  public:
@@ -529,13 +528,13 @@ class TFT_eSPI : public Print { friend class TFT_eSprite; // Sprite class has ac
            // Use with setTextDatum() to position string on TFT, and setTextPadding() to blank old displayed strings
            drawString(const char *string, int32_t x, int32_t y, uint8_t font),  // Draw string using specified font number
            drawString(const char *string, int32_t x, int32_t y),                // Draw string using current font
-           drawString(const String& string, int32_t x, int32_t y, uint8_t font),// Draw string using specified font number
-           drawString(const String& string, int32_t x, int32_t y),              // Draw string using current font
+           drawString(const std::string& string, int32_t x, int32_t y, uint8_t font),// Draw string using specified font number
+           drawString(const std::string& string, int32_t x, int32_t y),              // Draw string using current font
 
            drawCentreString(const char *string, int32_t x, int32_t y, uint8_t font),  // Deprecated, use setTextDatum() and drawString()
            drawRightString(const char *string, int32_t x, int32_t y, uint8_t font),   // Deprecated, use setTextDatum() and drawString()
-           drawCentreString(const String& string, int32_t x, int32_t y, uint8_t font),// Deprecated, use setTextDatum() and drawString()
-           drawRightString(const String& string, int32_t x, int32_t y, uint8_t font); // Deprecated, use setTextDatum() and drawString()
+           drawCentreString(const std::string& string, int32_t x, int32_t y, uint8_t font),// Deprecated, use setTextDatum() and drawString()
+           drawRightString(const std::string& string, int32_t x, int32_t y, uint8_t font); // Deprecated, use setTextDatum() and drawString()
 
   // Text rendering and font handling support funtions
   void     setCursor(int16_t x, int16_t y),                 // Set cursor for tft.print()
@@ -566,8 +565,8 @@ class TFT_eSPI : public Print { friend class TFT_eSprite; // Sprite class has ac
 
   int16_t  textWidth(const char *string, uint8_t font),     // Returns pixel width of string in specified font
            textWidth(const char *string),                   // Returns pixel width of string in current font
-           textWidth(const String& string, uint8_t font),   // As above for String types
-           textWidth(const String& string),
+           textWidth(const std::string& string, uint8_t font),   // As above for std::string types
+           textWidth(const std::string& string),
            fontHeight(int16_t font),                        // Returns pixel height of string in specified font
            fontHeight(void);                                // Returns pixel width of string in current font
 
@@ -690,9 +689,6 @@ class TFT_eSPI : public Print { friend class TFT_eSprite; // Sprite class has ac
 
            // Used for diagnostic sketch to see library setup adopted by compiler, see Section 7 above
   void     getSetup(setup_t& tft_settings); // Sketch provides the instance to populate
-
-  // Global variables
-  static   SPIClass& getSPIinstance(void); // Get SPI class handle
 
   uint32_t textcolor, textbgcolor;         // Text foreground and background colours
 

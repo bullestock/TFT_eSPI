@@ -94,6 +94,10 @@
 //#include <User_Setups/Setup104_RP2040_ST7796_parallel.h>
 //#include <User_Setups/Setup105_RP2040_ILI9341_PIO_SPI.h>    // Setup file for Raspberry Pi Pico with SPI PIO interface and ILI9341
 
+#ifdef SETUP_OPI_ZERO_ILI9341_PARALLEL
+#  include <User_Setups/Setup106_OrangePiZero_ILI9341_parallel.h>
+#endif
+
 //#include <User_Setups/Setup135_ST7789.h>           // Setup file for ESP8266 and ST7789 135 x 240 TFT
 
 //#include <User_Setups/Setup136_LilyGo_TTV.h>       // Setup file for ESP32 and Lilygo TTV ST7789 SPI bus TFT  135x240

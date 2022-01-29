@@ -450,50 +450,50 @@ TFT_eSPI::TFT_eSPI(int16_t w, int16_t h)
 void TFT_eSPI::initBus(void) {
 
 #ifdef TFT_CS
-  pinMode(TFT_CS, OUTPUT);
-  digitalWrite(TFT_CS, HIGH); // Chip select high (inactive)
+  pinMode(TFT_CS, direction::output);
+  digitalWrite(TFT_CS, 1); // Chip select high (inactive)
 #endif
 
 // Configure chip select for touchscreen controller if present
 #ifdef TOUCH_CS
-  pinMode(TOUCH_CS, OUTPUT);
-  digitalWrite(TOUCH_CS, HIGH); // Chip select high (inactive)
+  pinMode(TOUCH_CS, direction::output);
+  digitalWrite(TOUCH_CS, 1); // Chip select high (inactive)
 #endif
 
 // In parallel mode and with the RP2040 processor, the TFT_WR line is handled in the  PIO
 #if defined (TFT_WR) && !defined (ARDUINO_ARCH_RP2040) && !defined (ARDUINO_ARCH_MBED)
-  pinMode(TFT_WR, OUTPUT);
-  digitalWrite(TFT_WR, HIGH); // Set write strobe high (inactive)
+  pinMode(TFT_WR, direction::output);
+  digitalWrite(TFT_WR, 1); // Set write strobe high (inactive)
 #endif
 
 #ifdef TFT_DC
-  pinMode(TFT_DC, OUTPUT);
-  digitalWrite(TFT_DC, HIGH); // Data/Command high = data mode
+  pinMode(TFT_DC, direction::output);
+  digitalWrite(TFT_DC, 1); // Data/Command high = data mode
 #endif
 
 #ifdef TFT_RST
   if (TFT_RST >= 0) {
-    pinMode(TFT_RST, OUTPUT);
-    digitalWrite(TFT_RST, HIGH); // Set high, do not share pin with another SPI device
+    pinMode(TFT_RST, direction::output);
+    digitalWrite(TFT_RST, 1); // Set high, do not share pin with another SPI device
   }
 #endif
 
 #if defined (TFT_PARALLEL_8_BIT)
 
   // Make sure read is high before we set the bus to output
-  pinMode(TFT_RD, OUTPUT);
-  digitalWrite(TFT_RD, HIGH);
+  pinMode(TFT_RD, direction::output);
+  digitalWrite(TFT_RD, 1);
 
   #if  !defined (ARDUINO_ARCH_RP2040)  && !defined (ARDUINO_ARCH_MBED)// PIO manages pins
     // Set TFT data bus lines to output
-    pinMode(TFT_D0, OUTPUT); digitalWrite(TFT_D0, HIGH);
-    pinMode(TFT_D1, OUTPUT); digitalWrite(TFT_D1, HIGH);
-    pinMode(TFT_D2, OUTPUT); digitalWrite(TFT_D2, HIGH);
-    pinMode(TFT_D3, OUTPUT); digitalWrite(TFT_D3, HIGH);
-    pinMode(TFT_D4, OUTPUT); digitalWrite(TFT_D4, HIGH);
-    pinMode(TFT_D5, OUTPUT); digitalWrite(TFT_D5, HIGH);
-    pinMode(TFT_D6, OUTPUT); digitalWrite(TFT_D6, HIGH);
-    pinMode(TFT_D7, OUTPUT); digitalWrite(TFT_D7, HIGH);
+    pinMode(TFT_D0, direction::output); digitalWrite(TFT_D0, 1);
+    pinMode(TFT_D1, direction::output); digitalWrite(TFT_D1, 1);
+    pinMode(TFT_D2, direction::output); digitalWrite(TFT_D2, 1);
+    pinMode(TFT_D3, direction::output); digitalWrite(TFT_D3, 1);
+    pinMode(TFT_D4, direction::output); digitalWrite(TFT_D4, 1);
+    pinMode(TFT_D5, direction::output); digitalWrite(TFT_D5, 1);
+    pinMode(TFT_D6, direction::output); digitalWrite(TFT_D6, 1);
+    pinMode(TFT_D7, direction::output); digitalWrite(TFT_D7, 1);
   #endif
 
   PARALLEL_INIT_TFT_DATA_BUS;
@@ -566,8 +566,8 @@ void TFT_eSPI::init(uint8_t tc)
 
 #if defined (TFT_CS) && !defined(RP2040_PIO_INTERFACE)
   // Set to output once again in case MISO is used for CS
-  pinMode(TFT_CS, OUTPUT);
-  digitalWrite(TFT_CS, HIGH); // Chip select high (inactive)
+  pinMode(TFT_CS, direction::output);
+  digitalWrite(TFT_CS, 1); // Chip select high (inactive)
 #elif defined (ESP8266) && !defined (TFT_PARALLEL_8_BIT) && !defined (RP2040_PIO_SPI)
   spi.setHwCs(1); // Use hardware SS toggling
 #endif
@@ -575,8 +575,8 @@ void TFT_eSPI::init(uint8_t tc)
 
   // Set to output once again in case MISO is used for DC
 #if defined (TFT_DC) && !defined(RP2040_PIO_INTERFACE)
-    pinMode(TFT_DC, OUTPUT);
-    digitalWrite(TFT_DC, HIGH); // Data/Command high = data mode
+    pinMode(TFT_DC, direction::output);
+    digitalWrite(TFT_DC, 1); // Data/Command high = data mode
 #endif
 
     _booted = false;
@@ -587,14 +587,14 @@ void TFT_eSPI::init(uint8_t tc)
 #ifdef TFT_RST
   #if !defined(RP2040_PIO_INTERFACE)
     // Set to output once again in case MISO is used for TFT_RST
-    pinMode(TFT_RST, OUTPUT);
+    pinMode(TFT_RST, direction::output);
   #endif
   if (TFT_RST >= 0) {
-    digitalWrite(TFT_RST, HIGH);
+    digitalWrite(TFT_RST, 1);
     delay(5);
-    digitalWrite(TFT_RST, LOW);
+    digitalWrite(TFT_RST, 0);
     delay(20);
-    digitalWrite(TFT_RST, HIGH);
+    digitalWrite(TFT_RST, 1);
   }
   else writecommand(TFT_SWRST); // Software reset
 #else
@@ -675,13 +675,13 @@ void TFT_eSPI::init(uint8_t tc)
   setRotation(rotation);
 
 #if defined (TFT_BL) && defined (TFT_BACKLIGHT_ON)
-  pinMode(TFT_BL, OUTPUT);
+  pinMode(TFT_BL, direction::output);
   digitalWrite(TFT_BL, TFT_BACKLIGHT_ON);
 #else
   #if defined (TFT_BL) && defined (M5STACK)
     // Turn on the back-light LED
-    pinMode(TFT_BL, OUTPUT);
-    digitalWrite(TFT_BL, HIGH);
+    pinMode(TFT_BL, direction::output);
+    digitalWrite(TFT_BL, 1);
   #endif
 #endif
 }
@@ -856,14 +856,14 @@ uint8_t TFT_eSPI::readcommand8(uint8_t cmd_function, uint8_t index)
 
   writecommand(cmd_function); // Sets DC and CS high
 
-  busDir(dir_mask, INPUT);
+  busDir(dir_mask, direction::input);
 
   CS_L;
 
   // Read nth parameter (assumes caller discards 1st parameter or points index to 2nd)
   while(index--) reg = readByte();
 
-  busDir(dir_mask, OUTPUT);
+  busDir(dir_mask, direction::output);
 
   CS_H;
 
@@ -941,7 +941,7 @@ uint16_t TFT_eSPI::readPixel(int32_t x0, int32_t y0)
   readAddrWindow(x0, y0, 1, 1);
 
   // Set masked pins D0- D7 to input
-  busDir(dir_mask, INPUT);
+  busDir(dir_mask, direction::input);
 
   #if  !defined (SSD1963_DRIVER)
   // Dummy read to throw away don't care value
@@ -959,7 +959,7 @@ uint16_t TFT_eSPI::readPixel(int32_t x0, int32_t y0)
     CS_H;
 
     // Set masked pins D0- D7 to output
-    busDir(dir_mask, OUTPUT);
+    busDir(dir_mask, direction::output);
 
     return rgb;
 
@@ -971,7 +971,7 @@ uint16_t TFT_eSPI::readPixel(int32_t x0, int32_t y0)
     CS_H;
 
     // Set masked pins D0- D7 to output
-    busDir(dir_mask, OUTPUT);
+    busDir(dir_mask, direction::output);
 
     #ifdef ILI9486_DRIVER
       return  bgr;
@@ -1067,7 +1067,7 @@ void TFT_eSPI::readRect(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *da
   data += dx + dy * w;
 
   // Set masked pins D0- D7 to input
-  busDir(dir_mask, INPUT);
+  busDir(dir_mask, direction::input);
 
   #if defined (ILI9341_DRIVER)  || defined(ILI9341_2_DRIVER) || defined (ILI9488_DRIVER) // Read 3 bytes
     // Dummy read to throw away don't care value
@@ -1132,7 +1132,7 @@ void TFT_eSPI::readRect(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *da
   CS_H;
 
   // Set masked pins D0- D7 to output
-  busDir(dir_mask, OUTPUT);
+  busDir(dir_mask, direction::output);
 
 #else // SPI interface
 

@@ -42,8 +42,8 @@
   #define DC_C // No macro allocated so it generates no code
   #define DC_D // No macro allocated so it generates no code
 #else
-  #define DC_C digitalWrite(TFT_DC, LOW)
-  #define DC_D digitalWrite(TFT_DC, HIGH)
+  #define DC_C digitalWrite(TFT_DC, 0)
+  #define DC_D digitalWrite(TFT_DC, 1)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -53,8 +53,8 @@
   #define CS_L // No macro allocated so it generates no code
   #define CS_H // No macro allocated so it generates no code
 #else
-  #define CS_L digitalWrite(TFT_CS, LOW)
-  #define CS_H digitalWrite(TFT_CS, HIGH)
+  #define CS_L digitalWrite(TFT_CS, 0)
+  #define CS_H digitalWrite(TFT_CS, 1)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -68,8 +68,8 @@
 // Define the WR (TFT Write) pin drive code
 ////////////////////////////////////////////////////////////////////////////////////////
 #ifdef TFT_WR
-  #define WR_L digitalWrite(TFT_WR, LOW)
-  #define WR_H digitalWrite(TFT_WR, HIGH)
+  #define WR_L digitalWrite(TFT_WR, 0)
+  #define WR_H digitalWrite(TFT_WR, 1)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -79,8 +79,8 @@
   #define T_CS_L // No macro allocated so it generates no code
   #define T_CS_H // No macro allocated so it generates no code
 #else
-  #define T_CS_L digitalWrite(TOUCH_CS, LOW)
-  #define T_CS_H digitalWrite(TOUCH_CS, HIGH)
+  #define T_CS_L digitalWrite(TOUCH_CS, 0)
+  #define T_CS_H digitalWrite(TOUCH_CS, 1)
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////
@@ -143,8 +143,8 @@
 #if defined (TFT_SDA_READ)
   // Use a bit banged function call for STM32 and bi-directional SDA pin
   #define TFT_eSPI_ENABLE_8_BIT_READ // Enable tft_Read_8(void);
-  #define SCLK_L digitalWrite(TFT_SCLK, LOW)
-  #define SCLK_H digitalWrite(TFT_SCLK, LOW)
+  #define SCLK_L digitalWrite(TFT_SCLK, 0)
+  #define SCLK_H digitalWrite(TFT_SCLK, 0)
 #else
   // Use a SPI read transfer
   #define tft_Read_8() spi.transfer(0)

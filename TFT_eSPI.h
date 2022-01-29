@@ -734,8 +734,13 @@ class TFT_eSPI
            // Byte read prototype
   uint8_t  readByte(void);
 
-           // GPIO parallel bus input/output direction control
-  void     busDir(uint32_t mask, uint8_t mode);
+    // GPIO parallel bus input/output direction control
+    enum class direction
+    {
+        input,
+        output
+    };
+    void     busDir(uint32_t mask, direction mode);
 
            // Single GPIO input/output direction control
   void     gpioMode(uint8_t gpio, uint8_t mode);

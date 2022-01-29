@@ -1,8 +1,14 @@
-        ////////////////////////////////////////////////////
-        //       TFT_eSPI generic driver functions        //
-        ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+//    TFT_eSPI Orange Pi Zero driver functions    //
+////////////////////////////////////////////////////
 
-
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////
 #if defined (TFT_SDA_READ) && !defined (TFT_PARALLEL_8_BIT)
@@ -82,23 +88,58 @@ void TFT_eSPI::pushPixels(const void* data_in, uint32_t len){
   if (len) {tft_Write_16S(*data);}
 }
 
+#define EXPORT_PIN(pin)                                         \
+    if (::write(fd, #pin, 2) != 2)                              \
+    {                                                           \
+        perror("Error writing to /sys/class/gpio/export" #pin); \
+        exit(1);                                                \
+    }
+
+#define SET_PIN_MODE(pin, mode)                                         \
+    fd = open("/sys/class/gpio/gpio" #pin "/direction", O_WRONLY);      \
+    if (fd == -1)                                                       \
+    {                                                                   \
+        perror("Unable to open /sys/class/gpio" #pin "/direction");     \
+        exit(1);                                                        \
+    }                                                                   \
+    if (::write(fd,                                                     \
+              mode == direction::input ? "in" : "out",                  \
+              mode == direction::input ? 2 : 3) !=                      \
+        (mode == direction::input ? 2 : 3))                             \
+    {                                                                   \
+        perror("Error writing to /sys/class/gpio/" #pin "/direction");  \
+        exit(1);                                                        \
+    }
+
 /***************************************************************************************
 ** Function name:           GPIO direction control  - supports class functions
-** Description:             Set parallel bus to INPUT or OUTPUT
+** Description:             Set parallel bus to direction::input or direction::output
 ***************************************************************************************/
-void TFT_eSPI::busDir(uint32_t mask, uint8_t mode)
+void TFT_eSPI::busDir(uint32_t mask, direction mode)
 {
-  // mask is unused for generic processor
-  // Arduino native functions suited well to a generic driver
-  pinMode(TFT_D0, mode);
-  pinMode(TFT_D1, mode);
-  pinMode(TFT_D2, mode);
-  pinMode(TFT_D3, mode);
-  pinMode(TFT_D4, mode);
-  pinMode(TFT_D5, mode);
-  pinMode(TFT_D6, mode);
-  pinMode(TFT_D7, mode);
-  return;
+    // mask is unused for generic processor
+    int fd = open("/sys/class/gpio/export", O_WRONLY);
+    if (fd == -1)
+    {
+        perror("Unable to open /sys/class/gpio/export");
+        exit(1);
+    }
+    EXPORT_PIN(TFT_D0);
+    EXPORT_PIN(TFT_D1);
+    EXPORT_PIN(TFT_D2);
+    EXPORT_PIN(TFT_D3);
+    EXPORT_PIN(TFT_D4);
+    EXPORT_PIN(TFT_D5);
+    EXPORT_PIN(TFT_D6);
+    EXPORT_PIN(TFT_D7);
+    SET_PIN_MODE(TFT_D0, mode);
+    SET_PIN_MODE(TFT_D1, mode);
+    SET_PIN_MODE(TFT_D2, mode);
+    SET_PIN_MODE(TFT_D3, mode);
+    SET_PIN_MODE(TFT_D4, mode);
+    SET_PIN_MODE(TFT_D5, mode);
+    SET_PIN_MODE(TFT_D6, mode);
+    SET_PIN_MODE(TFT_D7, mode);
 }
 
 /***************************************************************************************
@@ -118,8 +159,8 @@ uint8_t TFT_eSPI::readByte(void)
 {
   uint8_t b = 0;
 
-  busDir(0, INPUT);
-  digitalWrite(TFT_RD, LOW);
+  busDir(0, direction::input);
+  digitalWrite(TFT_RD, 0);
 
   b |= digitalRead(TFT_D0) << 0;
   b |= digitalRead(TFT_D1) << 1;
@@ -130,8 +171,8 @@ uint8_t TFT_eSPI::readByte(void)
   b |= digitalRead(TFT_D6) << 6;
   b |= digitalRead(TFT_D7) << 7;
 
-  digitalWrite(TFT_RD, HIGH);
-  busDir(0, OUTPUT); 
+  digitalWrite(TFT_RD, 1);
+  busDir(0, direction::output); 
 
   return b;
 }

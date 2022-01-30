@@ -10,6 +10,8 @@
 // there is a nett performance gain by using swapped bytes.
 ***************************************************************************************/
 
+#include <cmath>
+
 /***************************************************************************************
 ** Function name:           TFT_eSprite
 ** Description:             Class constructor
@@ -268,7 +270,7 @@ void TFT_eSprite::createPalette(const uint16_t colorMap[], uint8_t colors)
   // Copy map colors
   for (uint8_t i = 0; i < colors; i++)
   {
-    _colorMap[i] = pgm_read_word(colorMap++);
+    _colorMap[i] = *colorMap++;
   }
 }
 
@@ -1189,7 +1191,7 @@ void  TFT_eSprite::pushImage(int32_t x, int32_t y, int32_t w, int32_t h, const u
       int32_t ox = x;
       for (int32_t xp = dx; xp < dx + dw; xp++)
       {
-        uint16_t color = pgm_read_word(data + xp + yp * w);
+        uint16_t color = data[xp + yp * w];
         if(_swapBytes) color = color<<8 | color>>8;
         _img[ox + y * _iwidth] = color;
         ox++;
@@ -1205,7 +1207,7 @@ void  TFT_eSprite::pushImage(int32_t x, int32_t y, int32_t w, int32_t h, const u
       int32_t ox = x;
       for (int32_t xp = dx; xp < dx + dw; xp++)
       {
-        uint16_t color = pgm_read_word(data + xp + yp * w);
+        uint16_t color = data[xp + yp * w];
         if(_swapBytes) color = color<<8 | color>>8;
         _img8[ox + y * _iwidth] = (uint8_t)((color & 0xE000)>>8 | (color & 0x0700)>>6 | (color & 0x0018)>>3);
         ox++;
@@ -1233,7 +1235,7 @@ void  TFT_eSprite::pushImage(int32_t x, int32_t y, int32_t w, int32_t h, const u
       int32_t odx = dx;
       int32_t ox  = x;
       while (odx < dx + dw) {
-        uint8_t pbyte = pgm_read_byte(ptr + (odx>>3));
+        uint8_t pbyte = ptr[odx >>3 ];
         uint8_t mask = 0x80 >> (odx & 7);
         while (mask) {
           uint8_t p = pbyte & mask;
@@ -2011,7 +2013,7 @@ void TFT_eSprite::drawChar(int32_t x, int32_t y, uint16_t c, uint32_t color, uin
     uint8_t column[6];
     uint8_t mask = 0x1;
 
-    for (int8_t i = 0; i < 5; i++ ) column[i] = pgm_read_byte(font + (c * 5) + i);
+    for (int8_t i = 0; i < 5; i++ ) column[i] = font[(c * 5) + i];
     column[5] = 0;
 
     int8_t j, k;
@@ -2037,7 +2039,7 @@ void TFT_eSprite::drawChar(int32_t x, int32_t y, uint16_t c, uint32_t color, uin
       if (i == 5)
         line = 0x0;
       else
-        line = pgm_read_byte(font + (c * 5) + i);
+        line = font[(c * 5) + i];
 
       if (size == 1) // default size
       {
@@ -2065,20 +2067,20 @@ void TFT_eSprite::drawChar(int32_t x, int32_t y, uint16_t c, uint32_t color, uin
 
 #ifdef LOAD_GFXFF
     // Filter out bad characters not present in font
-    if ((c >= pgm_read_word(&gfxFont->first)) && (c <= pgm_read_word(&gfxFont->last )))
+    if ((c >= gfxFont->first) && (c <= gfxFont->last))
     {
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-      c -= pgm_read_word(&gfxFont->first);
-      GFXglyph *glyph  = &(((GFXglyph *)pgm_read_dword(&gfxFont->glyph))[c]);
-      uint8_t  *bitmap = (uint8_t *)pgm_read_dword(&gfxFont->bitmap);
+      c -= gfxFont->first;
+      const GFXglyph& glyph  = gfxFont->glyph[c];
+      uint8_t  *bitmap = gfxFont->bitmap;
 
-      uint32_t bo = pgm_read_word(&glyph->bitmapOffset);
-      uint8_t  w  = pgm_read_byte(&glyph->width),
-               h  = pgm_read_byte(&glyph->height);
-               //xa = pgm_read_byte(&glyph->xAdvance);
-      int8_t   xo = pgm_read_byte(&glyph->xOffset),
-               yo = pgm_read_byte(&glyph->yOffset);
+      uint32_t bo = glyph.bitmapOffset;
+      uint8_t  w  = glyph.width,
+               h  = glyph.height;
+               //xa = glyph.xAdvance;
+      int8_t   xo = glyph.xOffset,
+               yo = glyph.yOffset;
       uint8_t  xx, yy, bits=0, bit=0;
       int16_t  xo16 = 0, yo16 = 0;
 
@@ -2091,7 +2093,7 @@ void TFT_eSprite::drawChar(int32_t x, int32_t y, uint16_t c, uint32_t color, uin
       for(yy=0; yy<h; yy++) {
         for(xx=0; xx<w; xx++) {
           if(bit == 0) {
-            bits = pgm_read_byte(&bitmap[bo++]);
+            bits = bitmap[bo++];
             bit  = 0x80;
           }
           if(bits & bit) hpc++;
@@ -2162,10 +2164,10 @@ int16_t TFT_eSprite::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t fo
     #endif
     }
     else {
-      if((uniCode >= pgm_read_word(&gfxFont->first)) && (uniCode <= pgm_read_word(&gfxFont->last) )) {
-        uint16_t   c2    = uniCode - pgm_read_word(&gfxFont->first);
-        GFXglyph *glyph = &(((GFXglyph *)pgm_read_dword(&gfxFont->glyph))[c2]);
-        return pgm_read_byte(&glyph->xAdvance) * textsize;
+      if((uniCode >= gfxFont->first) && (uniCode <= gfxFont->last)) {
+        uint16_t   c2    = uniCode - gfxFont->first;
+        const GFXglyph& glyph = gfxFont->glyph[c2];
+        return glyph.xAdvance * textsize;
       }
       else {
         return 0;
@@ -2178,13 +2180,13 @@ int16_t TFT_eSprite::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t fo
 
   int32_t width  = 0;
   int32_t height = 0;
-  uint32_t flash_address = 0;
+  const uint8_t* flash_address = 0;
   uniCode -= 32;
 
 #ifdef LOAD_FONT2
   if (font == 2) {
-    flash_address = pgm_read_dword(&chrtbl_f16[uniCode]);
-    width = pgm_read_byte(widtbl_f16 + uniCode);
+    flash_address = chrtbl_f16[uniCode];
+    width = widtbl_f16[uniCode];
     height = chr_hgt_f16;
   }
   #ifdef LOAD_RLE
@@ -2195,9 +2197,9 @@ int16_t TFT_eSprite::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t fo
 #ifdef LOAD_RLE
   {
     if ((font>2) && (font<9)) {
-      flash_address = pgm_read_dword( (const void*)(pgm_read_dword( &(fontdata[font].chartbl ) ) + uniCode*sizeof(void *)) );
-      width = pgm_read_byte( (uint8_t *)pgm_read_dword( &(fontdata[font].widthtbl ) ) + uniCode );
-      height= pgm_read_byte( &fontdata[font].height );
+      flash_address = fontdata[font].chartbl + uniCode*sizeof(void*);
+      width = fontdata[font].widthtbl[uniCode];
+      height = fontdata[font].height;
     }
   }
 #endif
@@ -2224,7 +2226,7 @@ int16_t TFT_eSprite::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t fo
 
       for (int32_t k = 0; k < w; k++)
       {
-        line = pgm_read_byte((uint8_t *)flash_address + w * i + k);
+        line = flash_address[w * i + k];
         if (line) {
           if (textsize == 1) {
             pX = x + k * 8;
@@ -2281,7 +2283,7 @@ int16_t TFT_eSprite::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t fo
       // 16 bit pixel count so maximum font size is equivalent to 180x180 pixels in area
       // w is total number of pixels to plot to fill character block
       while (pc < w) {
-        line = pgm_read_byte((uint8_t *)flash_address);
+        line = *flash_address;
         flash_address++;
         if (line & 0x80) {
           line &= 0x7F;
@@ -2327,7 +2329,7 @@ int16_t TFT_eSprite::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t fo
 
         // Maximum font size is equivalent to 180x180 pixels in area
         while (w > 0) {
-          line = pgm_read_byte((uint8_t *)flash_address++); // 8 bytes smaller when incrementing here
+          line = *flash_address++; // 8 bytes smaller when incrementing here
           if (line & 0x80) {
             line &= 0x7F;
             line++; w -= line;
@@ -2348,7 +2350,7 @@ int16_t TFT_eSprite::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t fo
         uint16_t pcol = 0;       // Pixel color
         bool     pf = true;      // Flag for plotting
         while (pc < w) {
-          line = pgm_read_byte((uint8_t *)flash_address);
+          line = *flash_address;
           flash_address++;
           if (line & 0x80) { pcol = textcolor; line &= 0x7F; pf = true;}
           else { pcol = textbgcolor; if (textcolor == textbgcolor) pf = false;}
@@ -2466,7 +2468,7 @@ void TFT_eSprite::drawGlyph(uint16_t code)
         }
         else
 #endif
-        pixel = pgm_read_byte(gPtr + gBitmap[gNum] + x + gWidth[gNum] * y);
+        pixel = gPtr[gBitmap[gNum] + x + gWidth[gNum] * y];
 
         if (pixel)
         {
@@ -2515,7 +2517,7 @@ void TFT_eSprite::drawGlyph(uint16_t code)
 ** Function name:           printToSprite
 ** Description:             Write a string to the sprite cursor position
 ***************************************************************************************/
-void TFT_eSprite::printToSprite(String string)
+void TFT_eSprite::printToSprite(std::string string)
 {
   if(!fontLoaded) return;
   printToSprite((char*)string.c_str(), string.length());
@@ -2526,7 +2528,7 @@ void TFT_eSprite::printToSprite(String string)
 ** Function name:           printToSprite
 ** Description:             Write a string to the sprite cursor position
 ***************************************************************************************/
-void TFT_eSprite::printToSprite(char *cbuffer, uint16_t len) //String string)
+void TFT_eSprite::printToSprite(char *cbuffer, uint16_t len)
 {
   if(!fontLoaded) return;
 

@@ -594,7 +594,9 @@ class TFT_eSPI
   void     writecommand(uint8_t c),  // Send a command, function resets DC/RS high ready for data
            writedata(uint8_t d);     // Send data with DC/RS set high
 
+#ifndef linux
   void     commandList(const uint8_t *addr); // Send a initialisation sequence to TFT stored in FLASH
+#endif
 
   uint8_t  readcommand8( uint8_t cmd_function, uint8_t index = 0); // read 8 bits from TFT
   uint16_t readcommand16(uint8_t cmd_function, uint8_t index = 0); // read 16 bits from TFT

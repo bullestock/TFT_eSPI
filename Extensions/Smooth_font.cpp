@@ -22,7 +22,7 @@ void TFT_eSPI::loadFont(const uint8_t array[])
 ** Function name:           loadFont
 ** Description:             loads parameters from a font vlw file
 *************************************************************************************x*/
-void TFT_eSPI::loadFont(String fontName, fs::FS &ffs)
+void TFT_eSPI::loadFont(std::string fontName, fs::FS &ffs)
 {
   fontFS = ffs;
   loadFont(fontName, false);
@@ -33,7 +33,7 @@ void TFT_eSPI::loadFont(String fontName, fs::FS &ffs)
 ** Function name:           loadFont
 ** Description:             loads parameters from a font vlw file
 *************************************************************************************x*/
-void TFT_eSPI::loadFont(String fontName, bool flash)
+void TFT_eSPI::loadFont(std::string fontName, bool flash)
 {
   /*
     The vlw font format does not appear to be documented anywhere, so some reverse
@@ -324,10 +324,10 @@ uint32_t TFT_eSPI::readInt32(void)
   else
 #endif
   {
-    val |= pgm_read_byte(fontPtr++) << 24;
-    val |= pgm_read_byte(fontPtr++) << 16;
-    val |= pgm_read_byte(fontPtr++) << 8;
-    val |= pgm_read_byte(fontPtr++);
+    val |= *fontPtr++ << 24;
+    val |= *fontPtr++ << 16;
+    val |= *fontPtr++ << 8;
+    val |= *fontPtr++;
   }
 
   return val;
@@ -438,7 +438,7 @@ void TFT_eSPI::drawGlyph(uint16_t code)
         if (fs_font) pixel = pbuffer[x];
         else
 #endif
-        pixel = pgm_read_byte(gPtr + gBitmap[gNum] + x + gWidth[gNum] * y);
+        pixel = gPtr[gBitmap[gNum] + x + gWidth[gNum] * y];
 
         if (pixel)
         {

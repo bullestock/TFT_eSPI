@@ -761,6 +761,7 @@ void TFT_eSPI::setRotation(uint8_t m)
   resetViewport();
 }
 
+#ifndef linux
 
 /***************************************************************************************
 ** Function name:           commandList, used for FLASH based lists only (e.g. ST7735)
@@ -792,9 +793,9 @@ void TFT_eSPI::commandList (const uint8_t *addr)
       delay( (ms==255 ? 500 : ms) );
     }
   }
-
 }
 
+#endif
 
 /***************************************************************************************
 ** Function name:           spiwrite
@@ -1306,6 +1307,7 @@ void TFT_eSPI::pushImage(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t *d
   end_tft_write();
 }
 
+#ifndef linux
 
 /***************************************************************************************
 ** Function name:           pushImage - for FLASH (PROGMEM) stored images
@@ -1525,6 +1527,7 @@ void TFT_eSPI::pushImage(int32_t x, int32_t y, int32_t w, int32_t h, const uint8
   end_tft_write();
 }
 
+#endif
 
 /***************************************************************************************
 ** Function name:           pushImage
@@ -2445,6 +2448,7 @@ void TFT_eSPI::fillTriangle ( int32_t x0, int32_t y0, int32_t x1, int32_t y1, in
   end_tft_write();              // Does nothing if Sprite class uses this function
 }
 
+#ifndef linux
 
 /***************************************************************************************
 ** Function name:           drawBitmap
@@ -2540,6 +2544,7 @@ void TFT_eSPI::drawXBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t 
   end_tft_write();              // Does nothing if Sprite class uses this function
 }
 
+#endif
 
 /***************************************************************************************
 ** Function name:           setCursor
@@ -2747,18 +2752,12 @@ int16_t TFT_eSPI::height(void)
 ***************************************************************************************/
 int16_t TFT_eSPI::textWidth(const std::string& string)
 {
-  int16_t len = string.length() + 2;
-  char buffer[len];
-  string.toCharArray(buffer, len);
-  return textWidth(buffer, textfont);
+    return textWidth(string.c_str(), textfont);
 }
 
 int16_t TFT_eSPI::textWidth(const std::string& string, uint8_t font)
 {
-  int16_t len = string.length() + 2;
-  char buffer[len];
-  string.toCharArray(buffer, len);
-  return textWidth(buffer, font);
+    return textWidth(string.c_str(), font);
 }
 
 int16_t TFT_eSPI::textWidth(const char *string)
@@ -2795,13 +2794,14 @@ int16_t TFT_eSPI::textWidth(const char *string, uint8_t font)
 #endif
 
   if (font>1 && font<9) {
-    char *widthtable = (char *)pgm_read_dword( &(fontdata[font].widthtbl ) ) - 32; //subtract the 32 outside the loop
+      const auto widthtable = fontdata[font].widthtbl - 32; //subtract the 32 outside the loop
 
     while (*string) {
       uniCode = *(string++);
       if (uniCode > 31 && uniCode < 128)
-      str_width += pgm_read_byte( widthtable + uniCode); // Normally we need to subtract 32 from uniCode
-      else str_width += pgm_read_byte( widthtable + 32); // Set illegal character = space width
+          str_width += *(widthtable + uniCode); // Normally we need to subtract 32 from uniCode
+      else
+          str_width += *(widthtable + 32); // Set illegal character = space width
     }
 
   }
@@ -2811,13 +2811,15 @@ int16_t TFT_eSPI::textWidth(const char *string, uint8_t font)
     if(gfxFont) { // New font
       while (*string) {
         uniCode = decodeUTF8(*string++);
-        if ((uniCode >= pgm_read_word(&gfxFont->first)) && (uniCode <= pgm_read_word(&gfxFont->last ))) {
-          uniCode -= pgm_read_word(&gfxFont->first);
-          GFXglyph *glyph  = &(((GFXglyph *)pgm_read_dword(&gfxFont->glyph))[uniCode]);
+        if ((uniCode >= gfxFont->first) && (uniCode <= gfxFont->last)) {
+          uniCode -= gfxFont->first;
+          const GFXglyph& glyph  = gfxFont->glyph[uniCode];
           // If this is not the  last character or is a digit then use xAdvance
-          if (*string  || isDigits) str_width += pgm_read_byte(&glyph->xAdvance);
+          if (*string  || isDigits)
+              str_width += glyph.xAdvance;
           // Else use the offset plus width since this can be bigger than xAdvance
-          else str_width += ((int8_t)pgm_read_byte(&glyph->xOffset) + pgm_read_byte(&glyph->width));
+          else
+              str_width += glyph.xOffset + glyph.width;
         }
       }
     }
@@ -2853,17 +2855,18 @@ uint16_t TFT_eSPI::fontsLoaded(void)
 int16_t TFT_eSPI::fontHeight(int16_t font)
 {
 #ifdef SMOOTH_FONT
-  if(fontLoaded) return gFont.yAdvance;
+  if(fontLoaded)
+      return gFont.yAdvance;
 #endif
 
 #ifdef LOAD_GFXFF
   if (font==1) {
     if(gfxFont) { // New font
-      return pgm_read_byte(&gfxFont->yAdvance) * textsize;
+      return gfxFont->yAdvance * textsize;
     }
   }
 #endif
-  return pgm_read_byte( &fontdata[font].height ) * textsize;
+  return fontdata[font].height * textsize;
 }
 
 int16_t TFT_eSPI::fontHeight(void)
@@ -2906,7 +2909,8 @@ void TFT_eSPI::drawChar(int32_t x, int32_t y, uint16_t c, uint32_t color, uint32
 
     setWindow(xd, yd, xd+5, yd+7);
 
-    for (int8_t i = 0; i < 5; i++ ) column[i] = pgm_read_byte(font + (c * 5) + i);
+    for (int8_t i = 0; i < 5; i++ )
+        column[i] = *(font + (c * 5) + i);
     column[5] = 0;
 
     for (int8_t j = 0; j < 8; j++) {
@@ -2929,7 +2933,7 @@ void TFT_eSPI::drawChar(int32_t x, int32_t y, uint16_t c, uint32_t color, uint32
       if (i == 5)
         line = 0x0;
       else
-        line = pgm_read_byte(font + (c * 5) + i);
+          line = *(font + (c * 5) + i);
 
       if (size == 1 && !fillbg) { // default size
         for (int8_t j = 0; j < 8; j++) {
@@ -2958,21 +2962,21 @@ void TFT_eSPI::drawChar(int32_t x, int32_t y, uint16_t c, uint32_t color, uint32
 
 #ifdef LOAD_GFXFF
     // Filter out bad characters not present in font
-    if ((c >= pgm_read_word(&gfxFont->first)) && (c <= pgm_read_word(&gfxFont->last ))) {
+    if ((c >= gfxFont->first) && (c <= gfxFont->last)) {
       //begin_tft_write();          // Sprite class can use this function, avoiding begin_tft_write()
       inTransaction = true;
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-      c -= pgm_read_word(&gfxFont->first);
-      GFXglyph *glyph  = &(((GFXglyph *)pgm_read_dword(&gfxFont->glyph))[c]);
-      uint8_t  *bitmap = (uint8_t *)pgm_read_dword(&gfxFont->bitmap);
+      c -= gfxFont->first;
+      const GFXglyph& glyph  = gfxFont->glyph[c];
+      const uint8_t* bitmap = gfxFont->bitmap;
 
-      uint32_t bo = pgm_read_word(&glyph->bitmapOffset);
-      uint8_t  w  = pgm_read_byte(&glyph->width),
-               h  = pgm_read_byte(&glyph->height);
-               //xa = pgm_read_byte(&glyph->xAdvance);
-      int8_t   xo = pgm_read_byte(&glyph->xOffset),
-               yo = pgm_read_byte(&glyph->yOffset);
+      uint32_t bo = glyph.bitmapOffset;
+      uint8_t  w  = glyph.width,
+               h  = glyph.height;
+               //xa = glyph.xAdvance;
+      int8_t   xo = glyph.xOffset,
+               yo = glyph.yOffset;
       uint8_t  xx, yy, bits=0, bit=0;
       int16_t  xo16 = 0, yo16 = 0;
 
@@ -2986,7 +2990,7 @@ void TFT_eSPI::drawChar(int32_t x, int32_t y, uint16_t c, uint32_t color, uint32
       for(yy=0; yy<h; yy++) {
         for(xx=0; xx<w; xx++) {
           if(bit == 0) {
-            bits = pgm_read_byte(&bitmap[bo++]);
+            bits = bitmap[bo++];
             bit  = 0x80;
           }
           if(bits & bit) hpc++;
@@ -4089,7 +4093,7 @@ size_t TFT_eSPI::write(uint8_t utf8)
   if (textfont == 2) {
     if (uniCode > 127) return 1;
 
-    cwidth = pgm_read_byte(widtbl_f16 + uniCode-32);
+    cwidth = widtbl_f16[uniCode-32];
     cheight = chr_hgt_f16;
     // Font 2 is rendered in whole byte widths so we must allow for this
     cwidth = (cwidth + 6) / 8;  // Width in whole bytes for font 2, should be + 7 but must allow for font width change
@@ -4105,8 +4109,8 @@ size_t TFT_eSPI::write(uint8_t utf8)
     if ((textfont>2) && (textfont<9)) {
       if (uniCode > 127) return 1;
       // Uses the fontinfo struct array to avoid lots of 'if' or 'switch' statements
-      cwidth = pgm_read_byte( (uint8_t *)pgm_read_dword( &(fontdata[textfont].widthtbl ) ) + uniCode-32 );
-      cheight= pgm_read_byte( &fontdata[textfont].height );
+      cwidth = fontdata[textfont].widthtbl[uniCode-32];
+      cheight = fontdata[textfont].height;
     }
   }
 #endif
@@ -4141,26 +4145,28 @@ size_t TFT_eSPI::write(uint8_t utf8)
   else {
     if(utf8 == '\n') {
       cursor_x  = 0;
-      cursor_y += (int16_t)textsize * (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+      cursor_y += (int16_t)textsize * gfxFont->yAdvance;
     } else {
-      if (uniCode > pgm_read_word(&gfxFont->last )) return 1;
-      if (uniCode < pgm_read_word(&gfxFont->first)) return 1;
+      if (uniCode > gfxFont->last)
+          return 1;
+      if (uniCode < gfxFont->first)
+          return 1;
 
-      uint16_t   c2    = uniCode - pgm_read_word(&gfxFont->first);
-      GFXglyph *glyph = &(((GFXglyph *)pgm_read_dword(&gfxFont->glyph))[c2]);
-      uint8_t   w     = pgm_read_byte(&glyph->width),
-                h     = pgm_read_byte(&glyph->height);
+      uint16_t   c2    = uniCode - gfxFont->first;
+      const GFXglyph& glyph = gfxFont->glyph[c2];
+      uint8_t   w     = glyph.width,
+                h     = glyph.height;
       if((w > 0) && (h > 0)) { // Is there an associated bitmap?
-        int16_t xo = (int8_t)pgm_read_byte(&glyph->xOffset);
+        int16_t xo = glyph.xOffset;
         if(textwrapX && ((cursor_x + textsize * (xo + w)) > width())) {
           // Drawing character would go off right edge; wrap to new line
           cursor_x  = 0;
-          cursor_y += (int16_t)textsize * (uint8_t)pgm_read_byte(&gfxFont->yAdvance);
+          cursor_y += (int16_t)textsize * gfxFont->yAdvance;
         }
         if (textwrapY && (cursor_y >= (int32_t) height())) cursor_y = 0;
         drawChar(cursor_x, cursor_y, uniCode, textcolor, textbgcolor, textsize);
       }
-      cursor_x += pgm_read_byte(&glyph->xAdvance) * (int16_t)textsize;
+      cursor_x += glyph.xAdvance * (int16_t)textsize;
     }
   }
 #endif // LOAD_GFXFF
@@ -4208,10 +4214,10 @@ int16_t TFT_eSPI::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font)
     #endif
     }
     else {
-      if((uniCode >= pgm_read_word(&gfxFont->first)) && (uniCode <= pgm_read_word(&gfxFont->last) )) {
-        uint16_t   c2    = uniCode - pgm_read_word(&gfxFont->first);
-        GFXglyph *glyph = &(((GFXglyph *)pgm_read_dword(&gfxFont->glyph))[c2]);
-        return pgm_read_byte(&glyph->xAdvance) * textsize;
+      if((uniCode >= gfxFont->first) && (uniCode <= gfxFont->last)) {
+        uint16_t   c2    = uniCode - gfxFont->first;
+        const GFXglyph& glyph = gfxFont->glyph[c2];
+        return glyph.xAdvance * textsize;
       }
       else {
         return 0;
@@ -4224,13 +4230,13 @@ int16_t TFT_eSPI::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font)
 
   int32_t width  = 0;
   int32_t height = 0;
-  uint32_t flash_address = 0;
+  const uint8_t* flash_address = 0;
   uniCode -= 32;
 
 #ifdef LOAD_FONT2
   if (font == 2) {
-    flash_address = pgm_read_dword(&chrtbl_f16[uniCode]);
-    width = pgm_read_byte(widtbl_f16 + uniCode);
+    flash_address = chrtbl_f16[uniCode];
+    width = widtbl_f16[uniCode];
     height = chr_hgt_f16;
   }
   #ifdef LOAD_RLE
@@ -4241,9 +4247,9 @@ int16_t TFT_eSPI::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font)
 #ifdef LOAD_RLE
   {
     if ((font>2) && (font<9)) {
-      flash_address = pgm_read_dword( (const void*)(pgm_read_dword( &(fontdata[font].chartbl ) ) + uniCode*sizeof(void *)) );
-      width = pgm_read_byte( (uint8_t *)pgm_read_dword( &(fontdata[font].widthtbl ) ) + uniCode );
-      height= pgm_read_byte( &fontdata[font].height );
+      flash_address = fontdata[font].chartbl + uniCode*sizeof(void*);
+      width = fontdata[font].widthtbl[uniCode];
+      height = fontdata[font].height;
     }
   }
 #endif
@@ -4272,7 +4278,7 @@ int16_t TFT_eSPI::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font)
         if (textcolor != textbgcolor) fillRect(x, pY, width * textsize, textsize, textbgcolor);
 
         for (int32_t k = 0; k < w; k++) {
-          line = pgm_read_byte((uint8_t *)flash_address + w * i + k);
+          line = flash_address[w * i + k];
           if (line) {
             if (textsize == 1) {
               pX = x + k * 8;
@@ -4314,7 +4320,7 @@ int16_t TFT_eSPI::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font)
       for (int32_t i = 0; i < height; i++) {
         pX = width;
         for (int32_t k = 0; k < w; k++) {
-          line = pgm_read_byte((uint8_t *) (flash_address + w * i + k) );
+          line = flash_address[w * i + k];
           mask = 0x80;
           while (mask && pX) {
             if (line & mask) {tft_Write_16(textcolor);}
@@ -4353,7 +4359,7 @@ int16_t TFT_eSPI::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font)
       // 16 bit pixel count so maximum font size is equivalent to 180x180 pixels in area
       // w is total number of pixels to plot to fill character block
       while (pc < w) {
-        line = pgm_read_byte((uint8_t *)flash_address);
+        line = *flash_address;
         flash_address++;
         if (line & 0x80) {
           line &= 0x7F;
@@ -4398,7 +4404,7 @@ int16_t TFT_eSPI::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font)
 
         // Maximum font size is equivalent to 180x180 pixels in area
         while (w > 0) {
-          line = pgm_read_byte((uint8_t *)flash_address++); // 8 bytes smaller when incrementing here
+          line = *flash_address++; // 8 bytes smaller when incrementing here
           if (line & 0x80) {
             line &= 0x7F;
             line++; w -= line;
@@ -4419,7 +4425,7 @@ int16_t TFT_eSPI::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font)
         uint16_t pcol = 0;       // Pixel color
         bool     pf = true;      // Flag for plotting
         while (pc < w) {
-          line = pgm_read_byte((uint8_t *)flash_address);
+          line = *flash_address;
           flash_address++;
           if (line & 0x80) { pcol = textcolor; line &= 0x7F; pf = true;}
           else { pcol = textbgcolor; if (textcolor == textbgcolor) pf = false;}
@@ -4462,18 +4468,12 @@ int16_t TFT_eSPI::drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font)
 // Without font number, uses font set by setTextFont()
 int16_t TFT_eSPI::drawString(const std::string& string, int32_t poX, int32_t poY)
 {
-  int16_t len = string.length() + 2;
-  char buffer[len];
-  string.toCharArray(buffer, len);
-  return drawString(buffer, poX, poY, textfont);
+    return drawString(string.c_str(), poX, poY, textfont);
 }
 // With font number
 int16_t TFT_eSPI::drawString(const std::string& string, int32_t poX, int32_t poY, uint8_t font)
 {
-  int16_t len = string.length() + 2;
-  char buffer[len];
-  string.toCharArray(buffer, len);
-  return drawString(buffer, poX, poY, font);
+    return drawString(string.c_str(), poX, poY, font);
 }
 
 // Without font number, uses font set by setTextFont()
@@ -4520,7 +4520,7 @@ int16_t TFT_eSPI::drawString(const char *string, int32_t poX, int32_t poY, uint8
   else
 #endif
   if (font!=1) {
-    baseline = pgm_read_byte( &fontdata[font].baseline ) * textsize;
+    baseline = fontdata[font].baseline * textsize;
     cheight = fontHeight(font);
   }
 
@@ -4592,10 +4592,10 @@ int16_t TFT_eSPI::drawString(const char *string, int32_t poX, int32_t poY, uint8
 
       while (n < len && c2 == 0) c2 = decodeUTF8((uint8_t*)string, &n, len - n);
 
-      if((c2 >= pgm_read_word(&gfxFont->first)) && (c2 <= pgm_read_word(&gfxFont->last) )) {
-        c2 -= pgm_read_word(&gfxFont->first);
-        GFXglyph *glyph = &(((GFXglyph *)pgm_read_dword(&gfxFont->glyph))[c2]);
-        xo = pgm_read_byte(&glyph->xOffset) * textsize;
+      if((c2 >= gfxFont->first) && (c2 <= gfxFont->last)) {
+        c2 -= gfxFont->first;
+        const GFXglyph& glyph = gfxFont->glyph[c2];
+        xo = glyph.xOffset * textsize;
         // Adjust for negative xOffset
         if (xo > 0) xo = 0;
         else cwidth -= xo;
@@ -4715,10 +4715,7 @@ return sumX;
 ***************************************************************************************/
 int16_t TFT_eSPI::drawCentreString(const std::string& string, int32_t dX, int32_t poY, uint8_t font)
 {
-  int16_t len = string.length() + 2;
-  char buffer[len];
-  string.toCharArray(buffer, len);
-  return drawCentreString(buffer, dX, poY, font);
+    return drawCentreString(string.c_str(), dX, poY, font);
 }
 
 int16_t TFT_eSPI::drawCentreString(const char *string, int32_t dX, int32_t poY, uint8_t font)
@@ -4738,10 +4735,7 @@ int16_t TFT_eSPI::drawCentreString(const char *string, int32_t dX, int32_t poY, 
 ***************************************************************************************/
 int16_t TFT_eSPI::drawRightString(const std::string& string, int32_t dX, int32_t poY, uint8_t font)
 {
-  int16_t len = string.length() + 2;
-  char buffer[len];
-  string.toCharArray(buffer, len);
-  return drawRightString(buffer, dX, poY, font);
+    return drawRightString(string.c_str(), dX, poY, font);
 }
 
 int16_t TFT_eSPI::drawRightString(const char *string, int32_t dX, int32_t poY, uint8_t font)
@@ -4763,7 +4757,7 @@ int16_t TFT_eSPI::drawNumber(long long_num, int32_t poX, int32_t poY)
 {
   isDigits = true; // Eliminate jiggle in monospaced fonts
   char str[12];
-  ltoa(long_num, str, 10);
+  sprintf(str, "%ld", long_num);
   return drawString(str, poX, poY, textfont);
 }
 
@@ -4771,7 +4765,7 @@ int16_t TFT_eSPI::drawNumber(long long_num, int32_t poX, int32_t poY, uint8_t fo
 {
   isDigits = true; // Eliminate jiggle in monospaced fonts
   char str[12];
-  ltoa(long_num, str, 10);
+  sprintf(str, "%ld", long_num);
   return drawString(str, poX, poY, font);
 }
 
@@ -4820,7 +4814,7 @@ int16_t TFT_eSPI::drawFloat(float floatNumber, uint8_t dp, int32_t poX, int32_t 
   uint32_t temp = (uint32_t)floatNumber;
 
   // Put integer part into array
-  ltoa(temp, str + ptr, 10);
+  sprintf(str + ptr, "%ld", temp);
 
   // Find out where the null is to get the digit count loaded
   while ((uint8_t)str[ptr] != 0) ptr++; // Move the pointer along
@@ -4840,7 +4834,7 @@ int16_t TFT_eSPI::drawFloat(float floatNumber, uint8_t dp, int32_t poX, int32_t 
     i++;
     floatNumber *= 10;       // for the next decimal
     temp = floatNumber;      // get the decimal
-    ltoa(temp, str + ptr, 10);
+    sprintf(str + ptr, "%ld", temp);
     ptr++; digits++;         // Increment pointer and digits count
     floatNumber -= temp;     // Remove that digit
   }
@@ -4869,14 +4863,14 @@ void TFT_eSPI::setFreeFont(const GFXfont *f)
 
   glyph_ab = 0;
   glyph_bb = 0;
-  uint16_t numChars = pgm_read_word(&gfxFont->last) - pgm_read_word(&gfxFont->first);
+  uint16_t numChars = gfxFont->last - gfxFont->first;
 
   // Find the biggest above and below baseline offsets
   for (uint8_t c = 0; c < numChars; c++) {
-    GFXglyph *glyph1  = &(((GFXglyph *)pgm_read_dword(&gfxFont->glyph))[c]);
-    int8_t ab = -pgm_read_byte(&glyph1->yOffset);
+    const GFXglyph& glyph1 = gfxFont->glyph[c];
+    int8_t ab = -glyph1.yOffset;
     if (ab > glyph_ab) glyph_ab = ab;
-    int8_t bb = pgm_read_byte(&glyph1->height) - ab;
+    int8_t bb = glyph1.height - ab;
     if (bb > glyph_bb) glyph_bb = bb;
   }
 }

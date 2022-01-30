@@ -30,6 +30,8 @@
   #include "Processors/TFT_eSPI_Generic.cpp"
 #endif
 
+#include <sstream>
+
 #ifndef SPI_BUSY_CHECK
   #define SPI_BUSY_CHECK
 #endif
@@ -686,6 +688,32 @@ void TFT_eSPI::init(uint8_t tc)
 #endif
 }
 
+void TFT_eSPI::println(const std::string& s)
+{
+    print(s);
+    write((uint8_t) '\n');
+}
+
+void TFT_eSPI::print(const std::string& s)
+{
+    for (auto ch : s)
+    {
+        write((uint8_t) ch);
+    }
+}
+
+void TFT_eSPI::println(double v)
+{
+    print(v);
+    write((uint8_t) '\n');
+}
+
+void TFT_eSPI::print(double v)
+{
+    std::ostringstream os;
+    os << v;
+    print(v);
+}
 
 /***************************************************************************************
 ** Function name:           setRotation

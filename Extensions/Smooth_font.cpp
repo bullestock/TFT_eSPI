@@ -239,7 +239,6 @@ void TFT_eSPI::loadMetrics(void)
     bitmapPtr += gWidth[gNum] * gHeight[gNum];
 
     gNum++;
-    yield();
   }
 
   gFont.yAdvance = gFont.maxAscent + gFont.maxDescent;
@@ -512,7 +511,6 @@ void TFT_eSPI::showFont(uint32_t td)
     drawGlyph(gUnicode[i]);
     cursorX += gxAdvance[i];
     //cursorX +=  printToSprite( cursorX, cursorY, i );
-    yield();
   }
 
   delay(timeDelay);

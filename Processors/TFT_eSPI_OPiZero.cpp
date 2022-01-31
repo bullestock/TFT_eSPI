@@ -2,78 +2,69 @@
 //    TFT_eSPI Orange Pi Zero driver functions    //
 ////////////////////////////////////////////////////
 
+#include <cstdarg>
 #include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
+
+#include <gpiod.hpp>
+
+void die_perror(const char *fmt, ...)
+{
+	va_list va;
+
+	va_start(va, fmt);
+	vfprintf(stderr, fmt, va);
+	fprintf(stderr, ": %s\n", strerror(errno));
+	va_end(va);
+
+	exit(EXIT_FAILURE);
+}
+
+static gpiod::chip chip;
+
+void init_libgpiod()
+{
+    chip = gpiod::chip("/dev/gpiochip0");
+	if (!chip)
+		die_perror("unable to open gpiochip0");
+    printf("init'ed\n");
+}
 
 void pinMode(int pin, direction mode)
 {
-    char s[40];
-    sprintf(s, "/sys/class/gpio/gpio%d/direction", pin);
-    int fd = open(s, O_WRONLY);
-    if (fd == -1)
+    printf("pinMode(%d, %d)\n", pin, (int) mode);
+    try
     {
-        auto err = errno;
-        printf("Unable to open %s: %s", s, strerror(err));
-        exit(1);
+        auto line = chip.get_line(pin);
+        line.request({
+                "TFT_eSPI",
+                mode == direction::input ? ::gpiod::line_request::DIRECTION_INPUT : ::gpiod::line_request::DIRECTION_OUTPUT,
+                0
+            });
     }
-    if (::write(fd,
-                mode == direction::input ? "in" : "out",
-                mode == direction::input ? 2 : 3) !=
-        (mode == direction::input ? 2 : 3))
+    catch (const std::exception& e)
     {
-        auto err = errno;
-        printf("Error writing to %s: %s", s, strerror(err));
-        exit(1);
+        die_perror("pinMode(%d, %d): exception: %s", pin, (int) mode, e.what());
     }
 }
 
 void digitalWrite(int pin, int value)
 {
-    char s[32];
-    sprintf(s, "/sys/class/gpio/gpio%d/value", pin);
-    int fd = open(s, O_WRONLY);
-    if (fd == -1) {
-        int err = errno;
-        printf("Unable to open %s: %s", s, strerror(err));
-        exit(1);
-    }
-
-    if (write(fd, value ? "1" : "0", 1) != 1) {
-        int err = errno;
-        printf("Error writing to %s: %s", s, strerror(err));
-        exit(1);
-    }
+	auto line = chip.get_line(pin);
+	if (!line)
+		die_perror("unable to retrieve GPIO line %d from chip", pin);
+    line.set_value(value);
 }
 
 int digitalRead(int pin)
 {
-    char s[32];
-    sprintf(s, "/sys/class/gpio/gpio%d/value", pin);
-    int fd = open(s, O_WRONLY);
-    if (fd == -1) {
-        int err = errno;
-        printf("Unable to open %s: %s", s, strerror(err));
-        exit(1);
-    }
-
-    char c;
-    if (read(fd, &c, 1) != 1) {
-        int err = errno;
-        printf("Error reading from %s: %s", s, strerror(err));
-        exit(1);
-    }
-    if (c != '0' && c != '1')
-    {
-        printf("Bad input value from %s: %d", s, (int) c);
-        exit(1);
-    }
-    return c == '1';
+	auto line = chip.get_line(pin);
+	if (!line)
+		die_perror("unable to retrieve GPIO line %d from chip", pin);
+    return line.get_value();
 }
 
 void delay(int ms)
@@ -172,21 +163,6 @@ void TFT_eSPI::pushPixels(const void* data_in, uint32_t len){
 ***************************************************************************************/
 void TFT_eSPI::busDir(uint32_t mask, direction mode)
 {
-    // mask is unused for generic processor
-    int fd = open("/sys/class/gpio/export", O_WRONLY);
-    if (fd == -1)
-    {
-        perror("Unable to open /sys/class/gpio/export");
-        exit(1);
-    }
-    EXPORT_PIN(TFT_D0);
-    EXPORT_PIN(TFT_D1);
-    EXPORT_PIN(TFT_D2);
-    EXPORT_PIN(TFT_D3);
-    EXPORT_PIN(TFT_D4);
-    EXPORT_PIN(TFT_D5);
-    EXPORT_PIN(TFT_D6);
-    EXPORT_PIN(TFT_D7);
     pinMode(TFT_D0, mode);
     pinMode(TFT_D1, mode);
     pinMode(TFT_D2, mode);

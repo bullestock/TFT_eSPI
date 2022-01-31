@@ -415,11 +415,11 @@ class TFT_eSPI
 
   virtual int16_t  drawChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font),
                    drawChar(uint16_t uniCode, int32_t x, int32_t y),
-                   height(void),
-                   width(void);
+                   height(),
+                   width();
 
   void     setRotation(uint8_t r); // Set the display image orientation to 0, 1, 2 or 3
-  uint8_t  getRotation(void);      // Read the current rotation
+  uint8_t  getRotation();      // Read the current rotation
 
   void     invertDisplay(bool i);  // Tell TFT to invert all displayed colours
 
@@ -431,13 +431,13 @@ class TFT_eSPI
   // Viewport commands, see "Viewport_Demo" sketch
   void     setViewport(int32_t x, int32_t y, int32_t w, int32_t h, bool vpDatum = true);
   bool     checkViewport(int32_t x, int32_t y, int32_t w, int32_t h);
-  int32_t  getViewportX(void);
-  int32_t  getViewportY(void);
-  int32_t  getViewportWidth(void);
-  int32_t  getViewportHeight(void);
-  bool     getViewportDatum(void);
+  int32_t  getViewportX();
+  int32_t  getViewportY();
+  int32_t  getViewportWidth();
+  int32_t  getViewportHeight();
+  bool     getViewportDatum();
   void     frameViewport(uint16_t color, int32_t w);
-  void     resetViewport(void);
+  void     resetViewport();
 
   // Push (aka write pixel) colours to the TFT (use setAddrWindow() first)
   void     pushColor(uint16_t color),
@@ -457,10 +457,10 @@ class TFT_eSPI
            // Support for half duplex (bi-directional SDA) SPI bus where MOSI must be switched to input
            #ifdef TFT_SDA_READ
              #if defined (TFT_eSPI_ENABLE_8_BIT_READ)
-  uint8_t  tft_Read_8(void);     // Read 8 bit value from TFT command register
+  uint8_t  tft_Read_8();     // Read 8 bit value from TFT command register
              #endif
-  void     begin_SDA_Read(void); // Begin a read on a half duplex (bi-directional SDA) SPI bus - sets MOSI to input
-  void     end_SDA_Read(void);   // Restore MOSI to output
+  void     begin_SDA_Read(); // Begin a read on a half duplex (bi-directional SDA) SPI bus - sets MOSI to input
+  void     end_SDA_Read();   // Restore MOSI to output
            #endif
 
   // Graphics drawing
@@ -487,7 +487,7 @@ class TFT_eSPI
   // Image rendering
            // Swap the byte order for pushImage() and pushPixels() - corrects endianness
   void     setSwapBytes(bool swap);
-  bool     getSwapBytes(void);
+  bool     getSwapBytes();
 
            // Draw bitmap
   void     drawBitmap( int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t fgcolor),
@@ -498,8 +498,8 @@ class TFT_eSPI
 
            // Set TFT pivot point (use when rendering rotated sprites)
   void     setPivot(int16_t x, int16_t y);
-  int16_t  getPivotX(void), // Get pivot x
-           getPivotY(void); // Get pivot y
+  int16_t  getPivotX(), // Get pivot x
+           getPivotY(); // Get pivot y
 
            // The next functions can be used as a pair to copy screen blocks (or horizontal/vertical lines) to another location
            // Read a block of pixels to a data buffer, buffer is 16 bit and the size must be at least w * h
@@ -552,8 +552,8 @@ class TFT_eSPI
   void     setCursor(int16_t x, int16_t y),                 // Set cursor for tft.print()
            setCursor(int16_t x, int16_t y, uint8_t font);   // Set cursor and font number for tft.print()
 
-  int16_t  getCursorX(void),                                // Read current cursor x position (moves with tft.print())
-           getCursorY(void);                                // Read current cursor y position
+  int16_t  getCursorX(),                                // Read current cursor x position (moves with tft.print())
+           getCursorY();                                // Read current cursor y position
            
   void     setTextColor(uint16_t color),                    // Set character (glyph) color only (background not over-written)
            setTextColor(uint16_t fgcolor, uint16_t bgcolor),// Set character (glyph) foreground and backgorund colour
@@ -562,10 +562,10 @@ class TFT_eSPI
   void     setTextWrap(bool wrapX, bool wrapY = false);     // Turn on/off wrapping of text in TFT width and/or height
 
   void     setTextDatum(uint8_t datum);                     // Set text datum position (default is top left), see Section 6 above 
-  uint8_t  getTextDatum(void);
+  uint8_t  getTextDatum();
 
   void     setTextPadding(uint16_t x_width);                // Set text padding (background blanking/over-write) width in pixels
-  uint16_t getTextPadding(void);                            // Get text padding
+  uint16_t getTextPadding();                            // Get text padding
 
 #ifdef LOAD_GFXFF
   void     setFreeFont(const GFXfont *f = NULL),            // Select the GFX Free Font
@@ -580,7 +580,7 @@ class TFT_eSPI
            textWidth(const std::string& string, uint8_t font),   // As above for std::string types
            textWidth(const std::string& string),
            fontHeight(int16_t font),                        // Returns pixel height of string in specified font
-           fontHeight(void);                                // Returns pixel width of string in current font
+           fontHeight();                                // Returns pixel width of string in current font
 
            // Used by library and Smooth font class to extract Unicode point codes from a UTF8 encoded string
   uint16_t decodeUTF8(uint8_t *buf, uint16_t *index, uint16_t remaining),
@@ -592,7 +592,7 @@ class TFT_eSPI
            // Used by Smooth font class to fetch a pixel colour for the anti-aliasing
   void     setCallback(getColorCallback getCol);
 
-  uint16_t fontsLoaded(void); // Each bit in returned value represents a font type that is loaded - used for debug/error handling only
+  uint16_t fontsLoaded(); // Each bit in returned value represents a font type that is loaded - used for debug/error handling only
 
   // Low level read/write
   void     spiwrite(uint8_t);        // legacy support only
@@ -660,7 +660,7 @@ class TFT_eSPI
   bool     initDMA(bool ctrl_cs = false);  // Initialise the DMA engine and attach to SPI bus - typically used in setup()
                                            // Parameter "true" enables DMA engine control of TFT chip select (ESP32 only)
                                            // For ESP32 only, TFT reads will not work if parameter is true
-  void     deInitDMA(void);   // De-initialise the DMA engine and detach from SPI bus - typically not used
+  void     deInitDMA();   // De-initialise the DMA engine and detach from SPI bus - typically not used
   
            // Push an image to the TFT using DMA, buffer is optional and grabs (double buffers) a copy of the image
            // Use the buffer if the image data will get over-written or destroyed while DMA is in progress
@@ -678,16 +678,16 @@ class TFT_eSPI
   void     pushPixelsDMA(uint16_t* image, uint32_t len);
 
            // Check if the DMA is complete - use while(tft.dmaBusy); for a blocking wait
-  bool     dmaBusy(void); // returns true if DMA is still in progress
-  void     dmaWait(void); // wait until DMA is complete
+  bool     dmaBusy(); // returns true if DMA is still in progress
+  void     dmaWait(); // wait until DMA is complete
 
   bool     DMA_Enabled = false;   // Flag for DMA enabled state
   uint8_t  spiBusyCheck = 0;      // Number of ESP32 transfer buffers to check
 
   // Bare metal functions
-  void     startWrite(void);                         // Begin SPI transaction
+  void     startWrite();                         // Begin SPI transaction
   void     writeColor(uint16_t color, uint32_t len); // Deprecated, use pushBlock()
-  void     endWrite(void);                           // End SPI transaction
+  void     endWrite();                           // End SPI transaction
 
   // Set/get an arbitrary library configuration attribute or option
   //       Use to switch ON/OFF capabilities such as UTF8 decoding - each attribute has a unique ID
@@ -737,7 +737,7 @@ class TFT_eSPI
   inline void end_tft_read()    __attribute__((always_inline));
 
            // Initialise the data bus GPIO and hardware interfaces
-  void     initBus(void);
+  void initBus();
 
            // Temporary  library development function  TODO: remove need for this
   void     pushSwapBytePixels(const void* data_in, uint32_t len);
@@ -746,7 +746,7 @@ class TFT_eSPI
   void     readAddrWindow(int32_t xs, int32_t ys, int32_t w, int32_t h);
 
            // Byte read prototype
-  uint8_t  readByte(void);
+  uint8_t  readByte();
 
     // GPIO parallel bus input/output direction control
     void     busDir(uint32_t mask, direction mode);

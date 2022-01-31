@@ -150,6 +150,8 @@
   #define tft_Read_8() spi.transfer(0)
 #endif
 
+void init_libgpiod();
+
 void pinMode(int pin, direction mode);
 
 void digitalWrite(int pin, int value);

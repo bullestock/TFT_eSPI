@@ -819,7 +819,7 @@ class TFT_eSPI
   uint32_t _lastColor; // Buffered value of last colour used
 
 #ifdef LOAD_GFXFF
-  GFXfont  *gfxFont;
+  GFXfont  *gfxFont = nullptr;
 #endif
 
 /***************************************************************************************

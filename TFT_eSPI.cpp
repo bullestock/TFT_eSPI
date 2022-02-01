@@ -356,7 +356,7 @@ inline void TFT_eSPI::end_tft_read(void){
 
 /***************************************************************************************
 ** Function name:           TFT_eSPI
-** Description:             Constructor , we must use hardware SPI pins
+** Description:             Constructor, we must use hardware SPI pins
 ***************************************************************************************/
 TFT_eSPI::TFT_eSPI(int16_t w, int16_t h)
 {
@@ -572,7 +572,7 @@ void TFT_eSPI::init(uint8_t tc)
 
 #if defined (TFT_CS) && !defined(RP2040_PIO_INTERFACE)
   // Set to output once again in case MISO is used for CS
-    //!!pinMode(TFT_CS, direction::output);
+  pinMode(TFT_CS, direction::output);
   digitalWrite(TFT_CS, 1); // Chip select high (inactive)
 #elif defined (ESP8266) && !defined (TFT_PARALLEL_8_BIT) && !defined (RP2040_PIO_SPI)
   spi.setHwCs(1); // Use hardware SS toggling
@@ -581,8 +581,8 @@ void TFT_eSPI::init(uint8_t tc)
 
   // Set to output once again in case MISO is used for DC
 #if defined (TFT_DC) && !defined(RP2040_PIO_INTERFACE)
-  //!!pinMode(TFT_DC, direction::output);
-    digitalWrite(TFT_DC, 1); // Data/Command high = data mode
+  pinMode(TFT_DC, direction::output);
+  digitalWrite(TFT_DC, 1); // Data/Command high = data mode
 #endif
 
     _booted = false;
@@ -593,7 +593,7 @@ void TFT_eSPI::init(uint8_t tc)
 #ifdef TFT_RST
   #if !defined(RP2040_PIO_INTERFACE)
     // Set to output once again in case MISO is used for TFT_RST
-    //!!pinMode(TFT_RST, direction::output);
+    pinMode(TFT_RST, direction::output);
   #endif
   if (TFT_RST >= 0) {
     digitalWrite(TFT_RST, 1);
@@ -856,7 +856,6 @@ void TFT_eSPI::writecommand(uint8_t c)
   DC_D;
 
   end_tft_write();
-
 }
 
 
@@ -894,7 +893,8 @@ uint8_t TFT_eSPI::readcommand8(uint8_t cmd_function, uint8_t index)
   CS_L;
 
   // Read nth parameter (assumes caller discards 1st parameter or points index to 2nd)
-  while(index--) reg = readByte();
+  while(index--)
+      reg = readByte();
 
   busDir(0, direction::output);
 

@@ -35,10 +35,11 @@ void init_libgpiod()
 
 void pinMode(int pin, direction mode)
 {
-    printf("pinMode(%d, %d)\n", pin, (int) mode);
+    //printf("pinMode(%d, %d)\n", pin, (int) mode);
     try
     {
         auto line = chip.get_line(pin);
+        line.release();
         line.request({
                 "TFT_eSPI",
                 mode == direction::input ? ::gpiod::line_request::DIRECTION_INPUT : ::gpiod::line_request::DIRECTION_OUTPUT,
@@ -64,7 +65,9 @@ int digitalRead(int pin)
 	auto line = chip.get_line(pin);
 	if (!line)
 		die_perror("unable to retrieve GPIO line %d from chip", pin);
-    return line.get_value();
+    const auto v = line.get_value();
+    //printf("pin%d: %d\n", pin, v);
+    return v;
 }
 
 void delay(int ms)
@@ -192,7 +195,6 @@ uint8_t TFT_eSPI::readByte(void)
 
   busDir(0, direction::input);
   digitalWrite(TFT_RD, 0);
-
   b |= digitalRead(TFT_D0) << 0;
   b |= digitalRead(TFT_D1) << 1;
   b |= digitalRead(TFT_D2) << 2;
@@ -306,21 +308,3 @@ void TFT_eSPI::pushPixels(const void* data_in, uint32_t len){
 ////////////////////////////////////////////////////////////////////////////////////////
 #endif // End of display interface specific functions
 ////////////////////////////////////////////////////////////////////////////////////////
-
-
-////////////////////////////////////////////////////////////////////////////////////////
-//                                DMA FUNCTIONS                                         
-////////////////////////////////////////////////////////////////////////////////////////
-
-//                Placeholder for DMA functions
-
-/*
-Minimal function set to support DMA:
-
-bool TFT_eSPI::initDMA(void)
-void TFT_eSPI::deInitDMA(void)
-bool TFT_eSPI::dmaBusy(void)
-void TFT_eSPI::pushPixelsDMA(uint16_t* image, uint32_t len)
-void TFT_eSPI::pushImageDMA(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t* image)
-
-*/
